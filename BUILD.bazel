@@ -1,0 +1,40 @@
+load("@npm//@bazel/typescript:index.bzl", "ts_project", "ts_config")
+load("@aspect_rules_swc//swc:swc.bzl", "swc_transpiler")
+load("@bazel_skylib//lib:partial.bzl", "partial")
+load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+    visibility = ["//visibility:public"],
+)
+
+ts_project(
+    name = "hello",
+    srcs = ["hello.ts"],
+    transpiler = partial.make(
+        swc_transpiler,
+    ),
+    tsconfig = "//:tsconfig"
+)
+
+ts_project(
+    name = "main",
+    srcs = ["main.ts"],
+    transpiler = partial.make(
+        swc_transpiler,
+    ),
+    tsconfig = "//:tsconfig"
+)
+
+nodejs_binary(
+    name = "binary",
+    data = [
+        ":hello",
+        ":main"
+    ],
+    entry_point = 'main.ts',
+    templated_args = [
+        "--node_options=--experimental-specifier-resolution=node",
+    ]
+)
